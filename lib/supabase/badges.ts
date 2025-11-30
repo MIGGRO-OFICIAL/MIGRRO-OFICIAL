@@ -1,0 +1,401 @@
+<<<<<<< HEAD
+// Serviço de Badges e Conquistas
+import { supabase } from '../supabase';
+
+export interface Badge {
+  id: string;
+  name: string;
+  description?: string;
+  icon_url?: string;
+  category?: string;
+  requirements?: any;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface UserBadge {
+  id: string;
+  user_id: string;
+  badge_id: string;
+  earned_at: string;
+  is_featured: boolean;
+  badge?: Badge;
+}
+
+export const badgesService = {
+  /**
+   * Listar todos os badges disponíveis
+   */
+  async listBadges(): Promise<{ data: Badge[] | null; error: any }> {
+    try {
+      const { data, error } = await supabase
+        .from('badges')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      return { data, error };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Obter badges de um usuário
+   */
+  async getUserBadges(userId: string): Promise<{ data: UserBadge[] | null; error: any }> {
+    try {
+      const { data, error } = await supabase
+        .from('user_badges')
+        .select(`
+          *,
+          badge:badges(*)
+        `)
+        .eq('user_id', userId)
+        .order('earned_at', { ascending: false });
+
+      return { data, error };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Adicionar badge a um usuário (apenas para sistema/admin)
+   */
+  async awardBadge(
+    userId: string,
+    badgeId: string,
+    isFeatured: boolean = false
+  ): Promise<{ data: UserBadge | null; error: any }> {
+    try {
+      const { data, error } = await supabase
+        .from('user_badges')
+        .insert({
+          user_id: userId,
+          badge_id: badgeId,
+          is_featured: isFeatured,
+        })
+        .select(`
+          *,
+          badge:badges(*)
+        `)
+        .single();
+
+      return { data, error };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Verificar e conceder badges automaticamente baseado em critérios
+   */
+  async checkAndAwardBadges(userId: string): Promise<{ data: UserBadge[] | null; error: any }> {
+    try {
+      // Buscar perfil do usuário
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError || !profile) {
+        return { data: null, error: profileError };
+      }
+
+      // Buscar badges disponíveis
+      const { data: badges, error: badgesError } = await this.listBadges();
+      if (badgesError || !badges) {
+        return { data: null, error: badgesError };
+      }
+
+      // Buscar badges já conquistados
+      const { data: userBadges, error: userBadgesError } = await this.getUserBadges(userId);
+      const earnedBadgeIds = userBadges?.map(ub => ub.badge_id) || [];
+
+      const newlyAwarded: UserBadge[] = [];
+
+      // Verificar cada badge
+      for (const badge of badges) {
+        if (earnedBadgeIds.includes(badge.id)) continue;
+
+        let shouldAward = false;
+
+        // Verificar requisitos
+        if (badge.requirements) {
+          // Exemplo: Badge de "Primeiro Serviço"
+          if (badge.requirements.type === 'first_service') {
+            const { count } = await supabase
+              .from('service_listings')
+              .select('*', { count: 'exact', head: true })
+              .eq('provider_id', userId);
+            shouldAward = (count || 0) >= 1;
+          }
+
+          // Exemplo: Badge de "10 Reviews"
+          if (badge.requirements.type === 'reviews_count') {
+            const { count } = await supabase
+              .from('service_reviews')
+              .select('*', { count: 'exact', head: true })
+              .eq('reviewee_id', userId);
+            shouldAward = (count || 0) >= (badge.requirements.threshold || 10);
+          }
+
+          // Exemplo: Badge de "Trust Score Alto"
+          if (badge.requirements.type === 'trust_score') {
+            shouldAward = (profile.trust_score || 0) >= (badge.requirements.threshold || 80);
+          }
+
+          // Exemplo: Badge de "Verificado"
+          if (badge.requirements.type === 'verified') {
+            const verifiedSteps = profile.verification_steps?.filter(
+              (step: any) => step.status === 'verified'
+            ) || [];
+            shouldAward = verifiedSteps.length >= (badge.requirements.min_steps || 2);
+          }
+        }
+
+        if (shouldAward) {
+          const { data: newBadge, error: awardError } = await this.awardBadge(
+            userId,
+            badge.id,
+            false
+          );
+          if (!awardError && newBadge) {
+            newlyAwarded.push(newBadge);
+          }
+        }
+      }
+
+      return { data: newlyAwarded, error: null };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Destacar badge no perfil
+   */
+  async toggleFeatured(
+    userId: string,
+    badgeId: string,
+    isFeatured: boolean
+  ): Promise<{ data: UserBadge | null; error: any }> {
+    try {
+      const { data, error } = await supabase
+        .from('user_badges')
+        .update({ is_featured: isFeatured })
+        .eq('user_id', userId)
+        .eq('badge_id', badgeId)
+        .select()
+        .single();
+
+      return { data, error };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+};
+=======
+// Serviço de Badges e Conquistas
+import { supabase } from '../supabase';
+
+export interface Badge {
+  id: string;
+  name: string;
+  description?: string;
+  icon_url?: string;
+  category?: string;
+  requirements?: any;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface UserBadge {
+  id: string;
+  user_id: string;
+  badge_id: string;
+  earned_at: string;
+  is_featured: boolean;
+  badge?: Badge;
+}
+
+export const badgesService = {
+  /**
+   * Listar todos os badges disponíveis
+   */
+  async listBadges(): Promise<{ data: Badge[] | null; error: any }> {
+    try {
+      const { data, error } = await supabase
+        .from('badges')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      return { data, error };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Obter badges de um usuário
+   */
+  async getUserBadges(userId: string): Promise<{ data: UserBadge[] | null; error: any }> {
+    try {
+      const { data, error } = await supabase
+        .from('user_badges')
+        .select(`
+          *,
+          badge:badges(*)
+        `)
+        .eq('user_id', userId)
+        .order('earned_at', { ascending: false });
+
+      return { data, error };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Adicionar badge a um usuário (apenas para sistema/admin)
+   */
+  async awardBadge(
+    userId: string,
+    badgeId: string,
+    isFeatured: boolean = false
+  ): Promise<{ data: UserBadge | null; error: any }> {
+    try {
+      const { data, error } = await supabase
+        .from('user_badges')
+        .insert({
+          user_id: userId,
+          badge_id: badgeId,
+          is_featured: isFeatured,
+        })
+        .select(`
+          *,
+          badge:badges(*)
+        `)
+        .single();
+
+      return { data, error };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Verificar e conceder badges automaticamente baseado em critérios
+   */
+  async checkAndAwardBadges(userId: string): Promise<{ data: UserBadge[] | null; error: any }> {
+    try {
+      // Buscar perfil do usuário
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError || !profile) {
+        return { data: null, error: profileError };
+      }
+
+      // Buscar badges disponíveis
+      const { data: badges, error: badgesError } = await this.listBadges();
+      if (badgesError || !badges) {
+        return { data: null, error: badgesError };
+      }
+
+      // Buscar badges já conquistados
+      const { data: userBadges, error: userBadgesError } = await this.getUserBadges(userId);
+      const earnedBadgeIds = userBadges?.map(ub => ub.badge_id) || [];
+
+      const newlyAwarded: UserBadge[] = [];
+
+      // Verificar cada badge
+      for (const badge of badges) {
+        if (earnedBadgeIds.includes(badge.id)) continue;
+
+        let shouldAward = false;
+
+        // Verificar requisitos
+        if (badge.requirements) {
+          // Exemplo: Badge de "Primeiro Serviço"
+          if (badge.requirements.type === 'first_service') {
+            const { count } = await supabase
+              .from('service_listings')
+              .select('*', { count: 'exact', head: true })
+              .eq('provider_id', userId);
+            shouldAward = (count || 0) >= 1;
+          }
+
+          // Exemplo: Badge de "10 Reviews"
+          if (badge.requirements.type === 'reviews_count') {
+            const { count } = await supabase
+              .from('service_reviews')
+              .select('*', { count: 'exact', head: true })
+              .eq('reviewee_id', userId);
+            shouldAward = (count || 0) >= (badge.requirements.threshold || 10);
+          }
+
+          // Exemplo: Badge de "Trust Score Alto"
+          if (badge.requirements.type === 'trust_score') {
+            shouldAward = (profile.trust_score || 0) >= (badge.requirements.threshold || 80);
+          }
+
+          // Exemplo: Badge de "Verificado"
+          if (badge.requirements.type === 'verified') {
+            const verifiedSteps = profile.verification_steps?.filter(
+              (step: any) => step.status === 'verified'
+            ) || [];
+            shouldAward = verifiedSteps.length >= (badge.requirements.min_steps || 2);
+          }
+        }
+
+        if (shouldAward) {
+          const { data: newBadge, error: awardError } = await this.awardBadge(
+            userId,
+            badge.id,
+            false
+          );
+          if (!awardError && newBadge) {
+            newlyAwarded.push(newBadge);
+          }
+        }
+      }
+
+      return { data: newlyAwarded, error: null };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Destacar badge no perfil
+   */
+  async toggleFeatured(
+    userId: string,
+    badgeId: string,
+    isFeatured: boolean
+  ): Promise<{ data: UserBadge | null; error: any }> {
+    try {
+      const { data, error } = await supabase
+        .from('user_badges')
+        .update({ is_featured: isFeatured })
+        .eq('user_id', userId)
+        .eq('badge_id', badgeId)
+        .select()
+        .single();
+
+      return { data, error };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+};
+>>>>>>> 75014090d373d530ee065de6bbe142b9dc93f0b2

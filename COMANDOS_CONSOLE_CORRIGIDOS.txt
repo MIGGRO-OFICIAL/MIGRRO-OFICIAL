@@ -1,0 +1,27 @@
+// Criar cliente Supabase no console
+const { createClient } = supabaseJs || window.supabase || (await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm')).then(m => m.createClient);
+
+// Configuração
+const supabaseUrl = 'https://gjphsheavnkdtmsrxmtl.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqcGhzaGVhdm5rZHRtc3J4bXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyODE1NzMsImV4cCI6MjA3OTg1NzU3M30.GH8_htMszSrylCd6rMXNXioZUKNE303T6QeTBrevAbs';
+
+// Criar cliente
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// 1. Verificar autenticação
+const { data: { user } } = await supabase.auth.getUser();
+console.log('✅ Usuário:', user ? user.email : 'NÃO AUTENTICADO');
+
+// 2. Testar query de posts
+const { data, error } = await supabase
+  .from('posts')
+  .select('*')
+  .eq('is_deleted', false)
+  .limit(5);
+
+console.log('✅ Posts:', data);
+console.log('❌ Erro:', error);
+
+// 3. Verificar se há requisições pendentes
+console.log('✅ Network requests:', performance.getEntriesByType('resource')
+  .filter(r => r.name.includes('supabase')));

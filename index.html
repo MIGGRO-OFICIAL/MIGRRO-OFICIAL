@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Miggro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            },
+            colors: {
+              // Cores oficiais MIGGRO
+              'miggro-teal': '#1E8277', // Teal principal (texto logo)
+              'miggro-orange': '#F5A623', // Laranja/dourado (ícone logo)
+              brand: {
+                50: '#e6f7f5',
+                100: '#b3e8e0',
+                200: '#80d9cb',
+                300: '#4dcab6',
+                400: '#1E8277', // Teal principal
+                500: '#1E8277',
+                600: '#186b62',
+                700: '#12544d',
+                800: '#0c3d38',
+                900: '#062623',
+              },
+              accent: {
+                50: '#fef8f0',
+                100: '#fdebd1',
+                200: '#fbdeb2',
+                300: '#f9d193',
+                400: '#F5A623', // Laranja/dourado principal
+                500: '#F5A623',
+                600: '#c4851c',
+                700: '#936415',
+                800: '#62430e',
+                900: '#312207',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #f8fafc;
+      }
+      /* Hide scrollbar for clean UI in horizontal lists */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+# Comandos Passo a Passo para Linkar Supabase CLI
+
+## Passo 1: Ir para o diretorio do projeto MIGGRO
+
+cd "C:\Users\rafae\OneDrive\Documentos\MIGGRO"
+
+## Passo 2: Verificar se esta no diretorio correto
+
+pwd
+# Deve mostrar: C:\Users\rafae\OneDrive\Documentos\MIGGRO
+
+## Passo 3: Verificar versao do Supabase CLI
+
+npx supabase --version
+
+## Passo 4: Fazer login no Supabase
+
+npx supabase login
+# Abrira o navegador - faca login e autorize
+
+## Passo 5: Listar projetos disponiveis
+
+npx supabase projects list
+
+## Passo 6: Verificar se ja esta linkado
+
+npx supabase status
+
+## Passo 7: Se nao estiver linkado, linkar o projeto MIGGRO
+
+npx supabase link --project-ref gjphsheavnkdtmsrxmtl
+# Quando pedir a senha: 123Mudarmiggro@
+
+## Passo 8: Verificar se linkou com sucesso
+
+npx supabase status
+# Deve mostrar: Project ID: gjphsheavnkdtmsrxmtl

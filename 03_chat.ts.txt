@@ -1,0 +1,298 @@
+// Serviços para Chat e Mensagens
+import { supabase } from '../supabase';
+import { RealtimeChannel } from '@supabase/supabase-js';
+
+export const chatService = {
+  /**
+   * Listar conversas do usuário
+   */
+  async listConversations() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      const { data, error } = await supabase
+        .from('conversations')
+        .select(`
+          *,
+          participant_1:profiles!conversations_participant_1_id_fkey(id, name, avatar_url, username),
+          participant_2:profiles!conversations_participant_2_id_fkey(id, name, avatar_url, username)
+        `)
+        .or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`)
+        .order('last_message_at', { ascending: false, nullsFirst: false });
+
+      if (error) throw error;
+
+      // Formatar para o formato esperado pelo frontend
+      const formatted = data?.map(conv => {
+        const otherParticipant = conv.participant_1_id === user.id 
+          ? conv.participant_2 
+          : conv.participant_1;
+        
+        const unreadCount = conv.participant_1_id === user.id
+          ? conv.participant_1_unread_count
+          : conv.participant_2_unread_count;
+
+        return {
+          id: conv.id,
+          participantId: otherParticipant.id,
+          participantName: otherParticipant.name,
+          participantAvatar: otherParticipant.avatar_url || '',
+          lastMessage: conv.last_message_text || '',
+          lastMessageTime: conv.last_message_at ? new Date(conv.last_message_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '',
+          unreadCount: unreadCount || 0,
+        };
+      });
+
+      return { data: formatted, error: null };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Obter ou criar conversa
+   */
+  async getOrCreateConversation(otherUserId: string) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Tentar encontrar conversa existente
+      const { data: existing } = await supabase
+        .from('conversations')
+        .select('*')
+        .or(`and(participant_1_id.eq.${user.id},participant_2_id.eq.${otherUserId}),and(participant_1_id.eq.${otherUserId},participant_2_id.eq.${user.id})`)
+        .single();
+
+      if (existing) {
+        return { data: existing, error: null };
+      }
+
+      // Criar nova conversa
+      const participant1 = user.id < otherUserId ? user.id : otherUserId;
+      const participant2 = user.id < otherUserId ? otherUserId : user.id;
+
+      const { data, error } = await supabase
+        .from('conversations')
+        .insert({
+          participant_1_id: participant1,
+          participant_2_id: participant2,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { data, error: null };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Listar mensagens de uma conversa
+   */
+  async listMessages(conversationId: string, limit = 50) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Verificar se é participante
+      const { data: conversation } = await supabase
+        .from('conversations')
+        .select('participant_1_id, participant_2_id')
+        .eq('id', conversationId)
+        .single();
+
+      if (!conversation || (conversation.participant_1_id !== user.id && conversation.participant_2_id !== user.id)) {
+        throw new Error('Não autorizado');
+      }
+
+      const { data, error } = await supabase
+        .from('messages')
+        .select(`
+          *,
+          sender:profiles!messages_sender_id_fkey(id, name, avatar_url)
+        `)
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+
+      // Formatar mensagens
+      const formatted = data?.reverse().map(msg => ({
+        id: msg.id,
+        senderId: msg.sender_id,
+        text: msg.text,
+        timestamp: new Date(msg.created_at),
+        isMe: msg.sender_id === user.id,
+        imageUrl: msg.image_url,
+        fileUrl: msg.file_url,
+        fileName: msg.file_name,
+      }));
+
+      return { data: formatted, error: null };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Enviar mensagem
+   */
+  async sendMessage(conversationId: string, text: string, imageUrl?: string, fileUrl?: string, fileName?: string) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Criar mensagem
+      const { data: message, error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          text,
+          image_url: imageUrl,
+          file_url: fileUrl,
+          file_name: fileName,
+        })
+        .select()
+        .single();
+
+      if (messageError) throw messageError;
+
+      // Atualizar conversa
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const { data: conversation } = await supabase
+        .from('conversations')
+        .select('participant_1_id, participant_2_id')
+        .eq('id', conversationId)
+        .single();
+
+      if (conversation) {
+        const isParticipant1 = conversation.participant_1_id === currentUser.id;
+        
+        await supabase
+          .from('conversations')
+          .update({
+            last_message_text: text,
+            last_message_at: new Date().toISOString(),
+            ...(isParticipant1 
+              ? { participant_2_unread_count: supabase.raw('participant_2_unread_count + 1') }
+              : { participant_1_unread_count: supabase.raw('participant_1_unread_count + 1') }
+            ),
+          })
+          .eq('id', conversationId);
+      }
+
+      return { data: message, error: null };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Marcar mensagens como lidas
+   */
+  async markAsRead(conversationId: string) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      const { data: conversation } = await supabase
+        .from('conversations')
+        .select('participant_1_id, participant_2_id')
+        .eq('id', conversationId)
+        .single();
+
+      if (!conversation) throw new Error('Conversa não encontrada');
+
+      const isParticipant1 = conversation.participant_1_id === user.id;
+      const updateField = isParticipant1 ? 'participant_1_unread_count' : 'participant_2_unread_count';
+
+      await supabase
+        .from('conversations')
+        .update({ [updateField]: 0 })
+        .eq('id', conversationId);
+
+      // Marcar mensagens como lidas
+      await supabase
+        .from('messages')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', user.id)
+        .eq('is_read', false);
+
+      return { error: null };
+    } catch (error: any) {
+      return { error };
+    }
+  },
+
+  /**
+   * Inscrever-se em atualizações de mensagens em tempo real
+   */
+  subscribeToMessages(conversationId: string, callback: (message: any) => void): RealtimeChannel {
+    const channel = supabase
+      .channel(`messages:${conversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          callback(payload.new);
+        }
+      )
+      .subscribe();
+
+    return channel;
+  },
+
+  /**
+   * Inscrever-se em atualizações de conversas
+   */
+  subscribeToConversations(userId: string, callback: (conversation: any) => void): RealtimeChannel {
+    const channel = supabase
+      .channel(`conversations:${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversations',
+          filter: `participant_1_id=eq.${userId}`,
+        },
+        (payload) => {
+          callback(payload.new);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversations',
+          filter: `participant_2_id=eq.${userId}`,
+        },
+        (payload) => {
+          callback(payload.new);
+        }
+      )
+      .subscribe();
+
+    return channel;
+  },
+
+  /**
+   * Desinscrever-se de um canal
+   */
+  unsubscribe(channel: RealtimeChannel) {
+    supabase.removeChannel(channel);
+  },
+};

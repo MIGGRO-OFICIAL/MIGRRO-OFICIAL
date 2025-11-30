@@ -1,0 +1,15 @@
+# Comandos para CMD (Prompt de Comando)
+
+# 1. Renomear arquivos
+cd "C:\Users\rafae\OneDrive\Documentos\MIGGRO"
+ren "supabase\migrations\001_initial_schema.sql" "0001_initial_schema.sql"
+ren "supabase\migrations\002_admin_tables.sql" "0002_admin_tables.sql"
+
+# 2. Verificar
+dir supabase\migrations\000*_*.sql
+
+# 3. Marcar como aplicadas
+npx supabase migration repair --status applied 0001 0002
+
+# 4. Fazer push
+npx supabase db push

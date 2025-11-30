@@ -1,0 +1,61 @@
+// VERSÃO FINAL - Copie e cole TUDO de uma vez no console
+
+(async () => {
+  // Tentar acessar supabase já carregado na página
+  let supabaseClient;
+  
+  // Método 1: Verificar se está no window
+  if (window.supabase) {
+    supabaseClient = window.supabase;
+    console.log('✅ Supabase encontrado no window');
+  } 
+  // Método 2: Carregar via CDN
+  else {
+    console.log('⏳ Carregando Supabase via CDN...');
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+    document.head.appendChild(script);
+    
+    await new Promise((resolve) => {
+      script.onload = resolve;
+    });
+    
+    const { createClient } = supabase;
+    const supabaseUrl = 'https://gjphsheavnkdtmsrxmtl.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqcGhzaGVhdm5rZHRtc3J4bXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyODE1NzMsImV4cCI6MjA3OTg1NzU3M30.GH8_htMszSrylCd6rMXNXioZUKNE303T6QeTBrevAbs';
+    supabaseClient = createClient(supabaseUrl, supabaseKey);
+    console.log('✅ Supabase criado via CDN');
+  }
+  
+  // 1. Verificar autenticação
+  console.log('🔍 Verificando autenticação...');
+  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+  console.log('✅ Usuário:', user ? user.email : 'NÃO AUTENTICADO');
+  if (authError) console.log('❌ Erro de autenticação:', authError);
+  
+  // 2. Testar query de posts
+  console.log('🔍 Testando query de posts...');
+  const { data, error } = await supabaseClient
+    .from('posts')
+    .select('*')
+    .eq('is_deleted', false)
+    .limit(5);
+  
+  console.log('✅ Posts encontrados:', data ? data.length : 0);
+  console.log('✅ Posts:', data);
+  if (error) {
+    console.log('❌ Erro na query:', error);
+    console.log('❌ Mensagem:', error.message);
+    console.log('❌ Detalhes:', error.details);
+  }
+  
+  // 3. Verificar requisições
+  const networkRequests = performance.getEntriesByType('resource')
+    .filter(r => r.name.includes('supabase'));
+  console.log('✅ Network requests ao Supabase:', networkRequests.length);
+  networkRequests.forEach(req => {
+    console.log('  -', req.name, 'Status:', req.responseStatus || 'N/A');
+  });
+  
+  console.log('✅ Diagnóstico completo!');
+})();

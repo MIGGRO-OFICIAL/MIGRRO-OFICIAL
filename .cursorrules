@@ -1,0 +1,37 @@
+# MIGGRO Project Rules
+
+Este é o projeto MIGGRO - totalmente independente do Rendizy.
+
+## Regras Importantes
+
+1. **NUNCA** referenciar ou copiar código do Rendizy
+2. **NUNCA** usar nomes, variáveis ou estruturas relacionadas ao Rendizy
+3. Este é um projeto **NOVO** e **SEPARADO**
+4. Todas as decisões de arquitetura devem ser feitas do zero para o MIGGRO
+
+## Contexto do Projeto
+
+- Nome: MIGGRO
+- Status: Projeto novo, desenvolvimento do zero
+- Independência: Totalmente separado de qualquer outro projeto
+<<<<<<< HEAD
+=======
+=======
+# MIGGRO Project Rules
+
+Este é o projeto MIGGRO - totalmente independente do Rendizy.
+
+## Regras Importantes
+
+1. **NUNCA** referenciar ou copiar código do Rendizy
+2. **NUNCA** usar nomes, variáveis ou estruturas relacionadas ao Rendizy
+3. Este é um projeto **NOVO** e **SEPARADO**
+4. Todas as decisões de arquitetura devem ser feitas do zero para o MIGGRO
+
+## Contexto do Projeto
+
+- Nome: MIGGRO
+- Status: Projeto novo, desenvolvimento do zero
+- Independência: Totalmente separado de qualquer outro projeto
+>>>>>>> origin/main
+>>>>>>> 75014090d373d530ee065de6bbe142b9dc93f0b2

@@ -1,0 +1,32 @@
+# COMANDO COMPLETO PARA CRIAR ZIP - COPIE E COLE NO POWERSHELL
+
+cd "c:\Users\rafae\OneDrive\Documentos\MIGGRO"
+$zipPath = "$env:USERPROFILE\Downloads\MIGGRO_REPOSITORIO_LIMPO.zip"
+if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$zip = [System.IO.Compression.ZipFile]::Open($zipPath, 'Create')
+$files = @()
+$files += Get-ChildItem package.json,tsconfig.json,vite.config.ts,index.html,.gitignore,.env.local.example,.cursorrules,vercel.json -File -ErrorAction SilentlyContinue
+$files += Get-ChildItem supabase\migrations\*.sql -ErrorAction SilentlyContinue
+$files += Get-Item supabase\README_MIGRATIONS.md -ErrorAction SilentlyContinue
+$files += Get-ChildItem lib,components,views,contexts,assets -Recurse -File -ErrorAction SilentlyContinue
+$files += Get-ChildItem *.ts,*.tsx,*.css -File -ErrorAction SilentlyContinue | Where-Object { $_.DirectoryName -eq (Get-Location).Path }
+$count = 0
+foreach ($f in $files) {
+    try {
+        $rel = $f.FullName.Replace((Get-Location).Path + '\', '').Replace('\', '/')
+        [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $f.FullName, $rel) | Out-Null
+        $count++
+    } catch {
+        Write-Host "Erro: $($f.Name)" -ForegroundColor Red
+    }
+}
+$zip.Dispose()
+$z = Get-Item $zipPath
+Write-Host "`n========================================" -ForegroundColor Green
+Write-Host "✅ ZIP CRIADO COM SUCESSO!" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
+Write-Host "Local: $($z.FullName)" -ForegroundColor White
+Write-Host "Tamanho: $([math]::Round($z.Length / 1MB, 2)) MB" -ForegroundColor White
+Write-Host "Arquivos: $count" -ForegroundColor White
+Write-Host "========================================" -ForegroundColor Green

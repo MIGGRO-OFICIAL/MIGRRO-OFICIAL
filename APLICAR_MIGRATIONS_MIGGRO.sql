@@ -1,0 +1,11 @@
+-- ============================================================================
+-- TODAS AS MIGRATIONS DO MIGGRO
+-- Aplicar no SQL Editor do Supabase
+-- ============================================================================
+-- URL: https://supabase.com/dashboard/project/gjphsheavnkdtmsrxmtl/sql/new
+-- ============================================================================
+-- IMPORTANTE: Este script contém APENAS migrations do MIGGRO
+-- Ignora migrations do Rendizy que podem estar misturadas
+-- ============================================================================
+
+-- Execute as migrations na ordem abaixo, uma por vez ou todas juntas:

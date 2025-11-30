@@ -1,0 +1,34 @@
+// VERSÃO SIMPLES - Copie e cole tudo de uma vez
+
+// Criar cliente Supabase
+const supabaseUrl = 'https://gjphsheavnkdtmsrxmtl.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqcGhzaGVhdm5rZHRtc3J4bXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyODE1NzMsImV4cCI6MjA3OTg1NzU3M30.GH8_htMszSrylCd6rMXNXioZUKNE303T6QeTBrevAbs';
+
+// Carregar biblioteca Supabase
+const script = document.createElement('script');
+script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+document.head.appendChild(script);
+
+// Aguardar carregar e executar
+script.onload = async () => {
+  const { createClient } = supabase;
+  const supabaseClient = createClient(supabaseUrl, supabaseKey);
+  
+  // 1. Verificar autenticação
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  console.log('✅ Usuário:', user ? user.email : 'NÃO AUTENTICADO');
+  
+  // 2. Testar query de posts
+  const { data, error } = await supabaseClient
+    .from('posts')
+    .select('*')
+    .eq('is_deleted', false)
+    .limit(5);
+  
+  console.log('✅ Posts:', data);
+  console.log('❌ Erro:', error);
+  
+  // 3. Verificar requisições
+  console.log('✅ Network requests:', performance.getEntriesByType('resource')
+    .filter(r => r.name.includes('supabase')));
+};

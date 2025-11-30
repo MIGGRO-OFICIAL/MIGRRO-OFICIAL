@@ -1,0 +1,15 @@
+# Comandos para renomear e fazer repair
+
+# 1. Renomear arquivos (execute no PowerShell)
+cd "C:\Users\rafae\OneDrive\Documentos\MIGGRO"
+Rename-Item "supabase\migrations\001_initial_schema.sql" "0001_initial_schema.sql"
+Rename-Item "supabase\migrations\002_admin_tables.sql" "0002_admin_tables.sql"
+
+# 2. Verificar se foram renomeados
+dir supabase\migrations\000*_*.sql
+
+# 3. Marcar como aplicadas
+npx supabase migration repair --status applied 0001 0002
+
+# 4. Fazer push
+npx supabase db push

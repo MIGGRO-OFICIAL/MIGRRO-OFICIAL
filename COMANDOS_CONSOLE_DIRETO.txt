@@ -1,0 +1,13 @@
+(async function() {
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+  document.head.appendChild(script);
+  await new Promise(r => script.onload = r);
+  const { createClient } = supabase;
+  const client = createClient('https://gjphsheavnkdtmsrxmtl.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqcGhzaGVhdm5rZHRtc3J4bXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyODE1NzMsImV4cCI6MjA3OTg1NzU3M30.GH8_htMszSrylCd6rMXNXioZUKNE303T6QeTBrevAbs');
+  const { data: { user } } = await client.auth.getUser();
+  console.log('Usuario:', user ? user.email : 'NAO AUTENTICADO');
+  const { data, error } = await client.from('posts').select('*').eq('is_deleted', false).limit(5);
+  console.log('Posts:', data);
+  console.log('Erro:', error);
+})();

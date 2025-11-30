@@ -1,0 +1,30 @@
+========================================
+RESOLVER CONFLITO E FAZER PUSH
+========================================
+
+Execute estes comandos no PowerShell:
+
+cd "C:\Users\rafae\OneDrive\Documentos\MIGGRO"
+
+# 1. Fazer commit das mudanças locais primeiro
+git add .
+git commit -m "docs: Documentacao push GitHub"
+
+# 2. Fazer pull novamente
+git pull origin main --allow-unrelated-histories
+
+# 3. Se houver conflitos, você verá arquivos marcados
+#    Resolva os conflitos e depois:
+git add .
+git commit -m "feat: Merge com remoto e reestruturacao completa"
+
+# 4. Fazer push
+git push -u origin main
+
+========================================
+OU USE O SCRIPT AUTOMATIZADO:
+========================================
+
+powershell -ExecutionPolicy Bypass -File "RESOLVER_CONFLITO_E_PUSH.ps1"
+
+========================================

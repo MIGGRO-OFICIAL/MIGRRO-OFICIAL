@@ -1,0 +1,21 @@
+# Comandos para Instalar Supabase CLI
+
+## Opcao 1: Via Winget (Recomendado)
+
+winget install --id Supabase.CLI --accept-package-agreements --accept-source-agreements
+
+## Opcao 2: Via PowerShell Script Oficial
+
+irm https://supabase.com/install.ps1 | iex
+
+## Opcao 3: Via Scoop (se tiver Scoop instalado)
+
+scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+scoop install supabase
+
+## Apos instalar:
+
+1. Feche e reabra o terminal
+2. Verifique: supabase --version
+3. Faca login: supabase login
+4. Linke o projeto: supabase link --project-ref gjphsheavnkdtmsrxmtl
