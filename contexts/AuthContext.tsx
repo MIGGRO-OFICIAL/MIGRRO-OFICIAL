@@ -86,7 +86,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
-<<<<<<< HEAD
     try {
       console.log('[AuthContext] Iniciando signIn...');
       setLoading(true);
@@ -137,18 +136,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Erro no signOut do AuthContext:', error);
       setUser(null); // Garantir que o user seja null mesmo com erro
     }
-=======
-    const { error } = await authService.signIn(email, password);
-    if (!error) {
-      await loadUser();
-    }
-    return { error };
-  };
-
-  const signOut = async () => {
-    await authService.signOut();
-    setUser(null);
->>>>>>> 75014090d373d530ee065de6bbe142b9dc93f0b2
   };
 
   const refreshUser = async () => {
